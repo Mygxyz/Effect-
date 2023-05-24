@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Image Particle Effect</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+</head>
+<body>
+  <input type="file" id="imageUpload" />
+  <div id="canvasContainer"></div>
+<input type="range" id="distanceSlider" min="1" max="10" step="1" value="5">
+
+
+  <button id="downloadButton">Download Image</button>
+  <script src="main.js"></script>
+  
+  
+  
+  
+  
+  <script>
+    
+let img;
+let particles = [];
+let particleDistance;
+
+function setup() {
+  const canvasContainer = document.getElementById('canvasContainer');
+  const canvas = createCanvas(600, 400);
+  canvas.parent(canvasContainer);
+  particleDistance = document.getElementById('particleDistance');
+  imageUploadListener();
+  downloadButtonListener();
+  addDistanceSliderListener()
+}
+
+function imageUploadListener() {
+  const imageUpload = document.getElementById('imageUpload');
+
+  imageUpload.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    const url = URL.createObjectURL(file);
+
+    img = loadImage(url, () => {
+      if (img) {
+        img.loadPixels(); // Add this line to load the pixel array
+        resizeCanvas(img.width, img.height);
+        const distanceFactor = parseInt(document.getElementById('distanceSlider').value); // Get the value of the distance factor from the slider
+        createParticlesFromImage(img, distanceFactor); // Pass the distanceFactor to the function
+      }
+    });
+  });
+}
+
+
+function createParticlesFromImage(img, distanceFactor) {
+  particles = [];
+
+  for (let x = 0; x < img.width; x += distanceFactor) {
+    for (let y = 0; y < img.height; y += distanceFactor) {
+      const particle = new Particle(x, y, img, distanceFactor);
+      particles.push(particle);
+    }
+  }
+}
+
+// Rest of the code remains the same
+
+
+class Particle {
+  constructor(x, y, img, distanceFactor) {
+    this.pos = createVector(x, y);
+    this.vel = createVector(0, 0); // Set the velocity to zero
+    this.distanceFactor = distanceFactor;
+    this.acc = createVector(0, 0);
+    this.c = img.get(x, y);
+  }
+    update() {
+    this.vel.add(this.acc);
+    this.vel.limit(1); // Limit the maximum velocity of the particles
+    this.pos.add(this.vel);
+    this.acc.mult(0);
+  }
+applyForce(force) {
+  this.acc.add(force);
+}
+
+  display() {
+    fill(this.c); // Use c property to fill ellipse
+    noStroke();
+    ellipse(this.pos.x, this.pos.y, 2, 2);
+  }
+}
+
+function draw() {
+  background(255);
+
+  if (img) {
+    particles.forEach((particle) => {
+      const x = Math.floor(particle.pos.x);
+      const y = Math.floor(particle.pos.y);
+
+      const force = p5.Vector.sub(particle.pos, createVector(x, y));
+      force.mult(-0.1);
+
+      particle.applyForce(force);
+      particle.update();
+      particle.display();
+    });
+  }
+}
+
+
+function updateParticles() {
+  background(255);
+  particles.forEach((particle) => {
+    particle.update();
+    particle.display();
+  });
+
+  // Call requestAnimationFrame to update the particles on the next frame
+  requestAnimationFrame(updateParticles);
+}
+
+
+
+
+
+function downloadButtonListener() {
+  const downloadButton = document.getElementById('downloadButton');
+
+  downloadButton.addEventListener('click', () => {
+    saveCanvas('image_with_particle_effect', 'png');
+  });
+}
+
+function addDistanceSliderListener() {
+  const distanceSlider = document.getElementById('distanceSlider');
+
+  distanceSlider.addEventListener('input', (e) => {
+    const distanceFactor = parseInt(e.target.value);
+    if (img) { // Check for the existence of the img object
+      createParticlesFromImage(img, distanceFactor);
+    }
+  });
+}
+
+  </script>
+  
+</body>
+</html>
